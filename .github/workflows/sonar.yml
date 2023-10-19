@@ -22,10 +22,15 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
      
-      - name: Install NPM dependencies
+      - name: Install Node.js
         run: |
-          npm install    
-
+          curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+          sudo apt-get update
+          sudo apt-get install -y nodejs
+      - name: Build
+        run: |
+          npm install
+        
       - name: Scan filesystem with Trivy
         run: |
           # Install Trivy
