@@ -22,16 +22,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-      - name: Build Docker image
+      - name: Scan filesystem with Trivy
         run: |
-          docker build -t sevenajay/netflix .
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-          docker push sevenajay/netflix:latest
-        env:
-          DOCKER_CLI_ACI: 1
-
-      - name: Install Trivy
-        run: |
+          # Install Trivy
           sudo apt-get update
           sudo apt-get install wget apt-transport-https gnupg lsb-release -y
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
@@ -39,10 +32,31 @@ jobs:
           sudo apt-get update
           sudo apt-get install trivy -y
 
-      - name: Scan files with Trivy
-        run: |
           # Replace the following line with the command to scan your specific files or directories
           trivy fs .
 
         env:
           DOCKER_CLI_ACI: 1
+
+      - name: Scan for OWASP Dependency-Check
+        run: |
+          # Install OWASP Dependency-Check 6.5.1
+          wget https://dl.bintray.com/jeremy-long/owasp/dependency-check-6.5.1-release.zip
+          unzip dependency-check-6.5.1-release.zip
+
+          # Run Dependency-Check on your project (replace with your project's build tool and options)
+          ./dependency-check/bin/dependency-check.sh --scan ./ --disableYarnAudit --disableNodeAudit
+
+        env:
+          DOCKER_CLI_ACI: 1
+    
+      - name: Build Docker image
+        run: |
+          # Replace these commands with your actual Docker build commands
+          docker build --build-arg TMDB_V3_API_KEY=ca86fe14eca3e76864bc17f59d319b92 -t netflix .
+          docker tag netflix sevenajay/netflix:latest
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+          docker push sevenajay/netflix:latest
+        env:
+          DOCKER_CLI_ACI: 1
+     
