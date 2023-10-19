@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build, Analyze, and Scan
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  build-and-push:
-    name: Build and Push Docker Image
+  build-analyze-scan:
+    name: Build, Analyze, and Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -24,19 +24,25 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build --build-arg TMDB_V3_API_KEY=ca86fe14eca3e76864bc17f59d319b92 -t sevenajay/netflix .
+          docker build -t sevenajay/netflix .
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
           docker push sevenajay/netflix:latest
         env:
           DOCKER_CLI_ACI: 1
 
-  deploy:
-    needs: build-and-push
-    runs-on: [aws-netflix]
-    steps:
-      - name: Pull image from docker hub
-        run: docker pull sevenajay/youtube:latest
-      - name: scan image
-        run: trivy image sevenajay/youtube:latest
-      - name: Run docker container
-        run: docker run -d --name netflix -p 8081:80 sevenajay/netflix:latest 
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy -y
+
+      - name: Scan files with Trivy
+        run: |
+          # Replace the following line with the command to scan your specific files or directories
+          trivy fs .
+
+        env:
+          DOCKER_CLI_ACI: 1
