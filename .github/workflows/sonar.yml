@@ -21,6 +21,10 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+     
+      - name: Install NPM dependencies
+        run: |
+          npm install    
 
       - name: Scan filesystem with Trivy
         run: |
