@@ -21,16 +21,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-     
-      - name: Install Node.js
-        run: |
-          curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-          sudo apt-get update
-          sudo apt-get install -y nodejs
-      - name: Build
-        run: |
-          npm install
-        
+
       - name: Scan filesystem with Trivy
         run: |
           # Install Trivy
@@ -46,18 +37,6 @@ jobs:
 
         env:
           DOCKER_CLI_ACI: 1
-
-      - name: Scan for OWASP Dependency-Check
-        run: |
-          # Install OWASP Dependency-Check 6.5.1
-          wget https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.1/dependency-check-6.5.1-release.zip
-          unzip dependency-check-6.5.1-release.zip
-
-          # Run Dependency-Check on your project (replace with your project's build tool and options)
-          ./dependency-check/bin/dependency-check.sh --scan ./ --disableYarnAudit --disableNodeAudit
-
-        env:
-          DOCKER_CLI_ACI: 1
     
       - name: Build Docker image
         run: |
@@ -68,4 +47,14 @@ jobs:
           docker push sevenajay/netflix:latest
         env:
           DOCKER_CLI_ACI: 1
-     
+
+  deploy:
+    needs: build-analyze-scan
+    runs-on: [aws-netflix]
+    steps:
+      - name: Pull image from docker hub
+        run: docker pull sevenajay/youtube:latest
+      - name: scan image
+        run: trivy image sevenajay/youtube:latest
+      - name: Run docker container
+        run: docker run -d --name netflix -p 8081:80 sevenajay/netflix:latest   
