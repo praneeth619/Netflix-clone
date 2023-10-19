@@ -41,7 +41,7 @@ jobs:
       - name: Scan for OWASP Dependency-Check
         run: |
           # Install OWASP Dependency-Check 6.5.1
-          wget https://dl.bintray.com/jeremy-long/owasp/dependency-check-6.5.1-release.zip
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.1/dependency-check-6.5.1-release.zip
           unzip dependency-check-6.5.1-release.zip
 
           # Run Dependency-Check on your project (replace with your project's build tool and options)
