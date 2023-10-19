@@ -24,15 +24,19 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t sevenajay/netflix:latest .
+          docker build --build-arg TMDB_V3_API_KEY=ca86fe14eca3e76864bc17f59d319b92 -t sevenajay/netflix .
           docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
           docker push sevenajay/netflix:latest
         env:
           DOCKER_CLI_ACI: 1
 
-      # If you wish to fail your job when the Quality Gate is red, uncomment the
-      # following lines. This would typically be used to fail a deployment.
-      # - uses: sonarsource/sonarqube-quality-gate-action@master
-      #   timeout-minutes: 5
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  deploy:
+    needs: build-and-push
+    runs-on: [aws-netflix]
+    steps:
+      - name: Pull image from docker hub
+        run: docker pull sevenajay/youtube:latest
+      - name: scan image
+        run: trivy image sevenajay/youtube:latest
+      - name: Run docker container
+        run: docker run -d --name netflix -p 8081:80 sevenajay/netflix:latest 
